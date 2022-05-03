@@ -245,7 +245,7 @@ export default {
     },
 
     makeToast(title, message, variant) {
-      this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 2000, });
+      this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 4000, });
     },
   },
 };

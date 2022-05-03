@@ -59,16 +59,17 @@ export default {
           socialReason: this.socialReason,
         };
         this.isLoading = true;
-        this.userService.registerUser(newUser).then(() => {
-          this.$router.push('/usuario/login').catch(()=>{});
-          // eslint-disable-next-line no-alert
-          alert('Cadastro feito com sucesso!');
+        this.userService.registerUser(newUser).then(async () => {
+          await this.$router.push('/usuario/login');
+          this.makeToast('SUCESSO', 'Cadastro feito com sucesso!', 'success');
         }).catch(() => {
           this.isLoading = false;
-          // eslint-disable-next-line no-alert
-          alert('Uma falha ocorreu ao efetuar o cadastro. Tente novamente.');
+          this.makeToast('ERRO', 'Uma falha ocorreu ao efetuar o cadastro. Tente novamente.', 'danger');
         });
       }
+    },
+    makeToast: function (title, message, variant) {
+      this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 4000 });
     },
     alterarTipoUsuario() {
       if (this.type === 'Aluno' || this.type === 'Professor') {

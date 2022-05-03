@@ -98,7 +98,7 @@ export default {
       }
     },
     makeToast: function (title, message, variant) {
-      this.$bvToast.toast(message, { title: title, variant: variant, solid: true });
+      this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 4000 });
     },
     sortKeywordMultiselectLabels() {
       this.keywordsSelected.sort((a, b) => b.keyword.length - a.keyword.length);

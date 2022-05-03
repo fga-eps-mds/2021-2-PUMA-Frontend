@@ -67,7 +67,7 @@ export default {
             return ['RL', 'AL', 'AC', 'RC', 'IC', 'EX', 'EC'].includes(this.form.status);
         },
         makeToast: function (title, message, variant) {
-            this.$bvToast.toast(message, { title: title, variant: variant, solid: true });
+            this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 4000 });
         },
         handleChangeEvaluation: function () {
             const AC_FEEDBACK = 'A proposta de projeto foi aceita e em breve poderá ser alocada a um semestre.';

@@ -56,7 +56,7 @@ export default {
             return ['AC', 'RC', 'IC', 'EX', 'EC'].includes(this.form.status);
         },
         makeToast: function (title, message, variant) {
-            this.$bvToast.toast(message, { title: title, variant: variant, solid: true });
+            this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 4000 });
         },
         handleChangeKeywords: function (value) {
             if (!!!value.find((k) => k.value === this.form.mainKeyword?.value)) {

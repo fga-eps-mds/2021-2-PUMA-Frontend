@@ -53,7 +53,7 @@ export default {
       }
     },
     makeToast: function (title, message, variant) {
-      this.$bvToast.toast(message, { title: title, variant: variant, solid: true });
+      this.$bvToast.toast(message, { title: title, variant: variant, solid: true, autoHideDelay: 4000 });
     },
     isChecked(option) {
       return this.selectedKeywords.some((op) => op.value === option.value);
@@ -91,7 +91,7 @@ export default {
         this.descricao = project.problem;
         this.resultadoEsperado = project.expectedresult;
       }).catch((error) => {
-        alert(`Erro ao recuperar projeto: ${error}`);
+        this.makeToast('ERRO', 'Falha ao carregar os dados', 'danger');
       });
     },
   },
