@@ -5,7 +5,7 @@ import SubjectService from '../../services/SubjectService';
 export default {
   data() {
     return {
-      kwNameAlreadyExist: false,
+      kwNameAlreadyExist: { state: false, keywords: [] },
       multiSelectPlaceholder: 'Carregando opções...',
       keywordService: new KeywordService(),
       subjectService: new SubjectService(),
@@ -57,7 +57,7 @@ export default {
     };
   },
   created() {
-    this.handleLoadData();
+    this.handleLoadData().then(() => {});
   },
   methods: {
     async handleLoadData() {
@@ -79,21 +79,15 @@ export default {
     },
 
     allowEdit(keyword) {
-      // return true;
       const { isAdmin, userId } = this.$store.getters.user;
       if (isAdmin) return true;
-
       let flag = false;
-
       Object.values(this.keywordsInfo[keyword.keywordid]).forEach((profId) => {
         if (userId === profId) {
           flag = true;
         }
       });
-      if (flag) {
-        return true;
-      }
-      return false;
+      return flag;
     },
 
     async getKeywords() {
@@ -179,29 +173,68 @@ export default {
       this.keywordDelete = keyWord.keywordid;
     },
 
-    keywordNameAlreadyExist() {
-      const currentKeyword = this.form.keywordName;
-      this.kwNameAlreadyExist = this.tableKeywordSubject.some((k) => this.treatKeyword(k.keyword) === this.treatKeyword(this.form.keywordName),);
+    keywordNameAlreadyExist(edit = false) {
+      const sanitazedKeywords = this.sanitazeKeywordsList(this.form.keywordName);
+      const splitedKeywords = this.splitValue(sanitazedKeywords);
+      this.kwNameAlreadyExist.state = false;
+      this.kwNameAlreadyExist.keywords.splice(0);
+      this.tableKeywordSubject.forEach((k) => {
+        splitedKeywords.forEach((sk) =>  {
+          const condition = (sk.toLowerCase() === this.sanitazeKeywordsList(k.keyword).toLowerCase());
+          if ((!edit && condition) || (edit && condition && (k.keywordid !== this.idKeywordEdit))) {
+            this.kwNameAlreadyExist.keywords.push(sk);
+            this.kwNameAlreadyExist.state = true;
+          }
+        })
+      });
     },
 
-    treatKeyword(keyword) { return keyword.split(' ').join('').toLowerCase(); },
+    sanitazeKeywordsList(keywordsList) {
+      return keywordsList.replace(/[^a-z^;A-Z]/g, '');
+    },
+
+    getFormatedAlteradyExistingKeywords() {
+      let keywords = '';
+      const length = this.kwNameAlreadyExist.keywords.length;
+      this.kwNameAlreadyExist.keywords.forEach((kw, index) => {
+        keywords += `"${kw}"`;
+        if (index !== length-1) {
+          keywords += index === length-2 ? ' e ' : ',';
+        }
+      });
+      keywords += ` já${length > 1 ? ' existem' : ' existe'}`;
+      keywords += '. Tente novamente.';
+      return keywords;
+    },
+
+    splitValue(sanitazedKeywords) {
+      const splitedValue = sanitazedKeywords.split(';');
+      if (splitedValue.some((v) => v !== '')) {
+        return splitedValue.filter((v) => v !== '');
+      } else {
+        return [];
+      }
+    },
 
     async handleAdd() {
       try {
         this.keywordNameAlreadyExist();
         const isFormValid = await this.$refs.observer.validate();
-
-        if (isFormValid && !this.kwNameAlreadyExist) {
+        if (isFormValid && !this.kwNameAlreadyExist.state) {
+          const sanitazedKeywords = this.sanitazeKeywordsList(this.form.keywordName);
+          const splitedKeywords = this.splitValue(sanitazedKeywords);
           this.$store.commit('OPEN_LOADING_MODAL', { title: 'Enviando...' });
-          const response = await this.keywordService.addKeyword(this.form.keywordName);
-          const currentKeywordid = response.data.keywordid;
-          const idSubject = this.form.selectedSubject;
+          for (const splitedKeyword of splitedKeywords) {
+            const response = await this.keywordService.addKeyword(splitedKeyword);
+            const currentKeywordid = response.data.keywordid;
+            const idSubject = this.form.selectedSubject;
 
-          await this.keywordService.addKeywordToSubject(currentKeywordid, idSubject);
-          await this.getKeywords();
+            await this.keywordService.addKeywordToSubject(currentKeywordid, idSubject);
+            await this.getKeywords();
 
-          this.openModalRegister = false;
-          this.$store.commit('CLOSE_LOADING_MODAL');
+            this.openModalRegister = false;
+            this.$store.commit('CLOSE_LOADING_MODAL');
+          }
           this.makeToast('SUCESSO', 'Cadastro realizado com sucesso!', 'success');
         }
       } catch (error) {
@@ -214,7 +247,7 @@ export default {
     async handleEdit() {
       try {
         const isFormValid = await this.$refs.observer.validate();
-        if (isFormValid && this.kwNameAlreadyExist === false) {
+        if (isFormValid && !this.kwNameAlreadyExist.state) {
           this.$store.commit('OPEN_LOADING_MODAL', { title: 'Enviando...' });
           const response = await this.keywordService.updateKeyword(this.idKeywordEdit, this.form.keywordName);
           const idKeywordUpdated = response.data.keywordid;
@@ -222,7 +255,7 @@ export default {
           this.openModalEdit = false;
           this.$store.commit('CLOSE_LOADING_MODAL');
           this.makeToast('SUCESSO', 'Palavra-Chave editada com sucesso!', 'success');
-          this.getKeywords();
+          this.getKeywords().then(() => {});
         }
       } catch (error) {
         this.openModalEdit = false;
